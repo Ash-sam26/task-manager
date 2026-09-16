@@ -9,12 +9,18 @@ export async function GET() {
     return NextResponse.json({ error: 'Not logged in' }, { status: 401 })
   }
 
-  const tasks = await prisma.task.findMany({
-    where: { ownerId: userId },
-    orderBy: { createdAt: 'desc' },
-  })
+  const [user, tasks] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    }),
+    prisma.task.findMany({
+      where: { ownerId: userId },
+      orderBy: { createdAt: 'desc' },
+    }),
+  ])
 
-  return NextResponse.json(tasks)
+  return NextResponse.json({ username: user?.username ?? null, tasks })
 }
 
 export async function POST(request: Request) {
